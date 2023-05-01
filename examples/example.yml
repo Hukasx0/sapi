@@ -1,0 +1,14 @@
+- target: localhost
+  port: 80
+  endpoint: /
+  method: GET
+
+- target: localhost
+  port: 80
+  endpoint: /auth
+  method: POST
+  headers:
+    Content-Type: application/x-www-form-urlencoded
+  data:
+    username: user
+    password: password
