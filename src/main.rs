@@ -32,6 +32,45 @@ fn main() {
         }
     };
     for request in request_contents {
-        println!("Found: {:?}", request);
+        match request.method.as_str() {
+           "GET" => {
+                let url = format!("http://{}:{}{}", request.target, request.port, request.endpoint);
+                let response = match ureq::get(&url).call() {
+                    Ok(r) => r,
+                    Err(e) => {
+                        eprintln!("Error while connecting to {}:{}: {}", request.target, request.port, e);
+                        process::exit(1);
+                    }
+                };
+                println!("{:?}", response);
+           },
+           "POST" => {
+                let url = format!("http://{}:{}{}", request.target, request.port, request.endpoint);
+                let mut req = ureq::post(&url);
+                if let Some(headers) = request.headers {
+                    for (header, data) in headers {
+                        req = req.set(&header, &data);
+                    }
+                }
+                if let Some(data) = request.data {
+                    match req.header("Content-Type") {
+                        Some(content_type) if content_type.starts_with("application/x-www-form-urlencoded") => {
+                            let response = req.send_form(&data.iter().map(|(x, y)| (x.as_str(), y.as_str())).collect::<Vec<_>>()).unwrap();
+                            println!("{:?}", response);
+                        },
+                        Some(content_type) if content_type.starts_with("application/json") => {
+                            let response = req.send_string(&serde_json::to_string(&serde_json::to_value(data).unwrap()).unwrap()).unwrap();
+                            println!("{:?}", response);
+                        },
+                        Some(content_type) if content_type.starts_with("text/plain") => {
+                            let response = req.send_string(&data.get("txt").map(|v| v.to_string()).unwrap());
+                            println!("{:?}", response);
+                        },
+                        Some(_) | None => {}
+                    }
+                }
+           },
+           _ => println!("other request") ,
+        }
     }
 }
