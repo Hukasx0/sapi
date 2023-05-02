@@ -44,9 +44,24 @@ fn main() {
     let mut responses: Vec<Response> = Vec::new();
     for request in request_contents {
         match request.method.as_str() {
-           "GET" => {
+           "GET" | "HEAD" | "DELETE" => {
                 let url = format!("http://{}:{}{}", request.target, request.port, request.endpoint);
-                let response = match ureq::get(&url).call() {
+                let mut req;
+                match request.method.as_str() {
+                    "GET" => req = ureq::get(&url),
+                    "HEAD" => req = ureq::head(&url),
+                    "DELETE" => req = ureq::delete(&url),
+                    _ => {
+                        eprintln!("Unexpected error");
+                        process::exit(1);
+                    }
+                }
+                if let Some(headers) = request.headers {
+                    for (header, data) in headers {
+                        req = req.set(&header, &data);
+                    }
+                }
+                let response = match req.call() {
                     Ok(r) => r,
                     Err(Error::Status(_, r)) => r,
                     Err(e) => {
@@ -58,13 +73,22 @@ fn main() {
                 responses.push(Response {
                     status: response.status(),
                     status_text: response.status_text().to_string(),
-                    method: String::from("GET"),
+                    method: String::from(request.method),
                     url: url.to_string(),
                 })
            },
-           "POST" => {
+           "POST" | "PUT" | "PATCH" => {
                 let url = format!("http://{}:{}{}", request.target, request.port, request.endpoint);
-                let mut req = ureq::post(&url);
+                let mut req;
+                match request.method.as_str() {
+                    "POST" => req = ureq::post(&url),
+                    "PUT" => req = ureq::put(&url),
+                    "PATCH" => req = ureq::patch(&url),
+                    _ => {
+                        eprintln!("Unexpected error");
+                        process::exit(1);
+                    }
+                }
                 if let Some(headers) = request.headers {
                     for (header, data) in headers {
                         req = req.set(&header, &data);
@@ -79,7 +103,7 @@ fn main() {
                                     responses.push(Response {
                                         status: r.status(),
                                         status_text: r.status_text().to_string(),
-                                        method: String::from("POST"),
+                                        method: String::from(request.method),
                                         url: url.to_string(),
                                     });
                                 },
