@@ -1,4 +1,5 @@
 use serde::{Serialize, Deserialize};
+use serde_json::to_writer_pretty;
 use std::{collections::HashMap, fs::File, env, process};
 use ureq::Error;
 
@@ -10,6 +11,14 @@ struct Request {
     method: String,
     headers: Option<HashMap<String, String>>,
     data: Option<HashMap<String, String>>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct Response {
+    status: u16,
+    status_text: String,
+    method: String,
+    url: String,
 }
 
 fn main() {
@@ -32,7 +41,7 @@ fn main() {
             process::exit(1);
         }
     };
-    let mut responses: Vec<ureq::Response> = Vec::new();
+    let mut responses: Vec<Response> = Vec::new();
     for request in request_contents {
         match request.method.as_str() {
            "GET" => {
@@ -46,8 +55,12 @@ fn main() {
                     }
                 };
                 println!("{:?}", response);
-                
-                responses.push(response);
+                responses.push(Response {
+                    status: response.status(),
+                    status_text: response.status_text().to_string(),
+                    method: String::from("GET"),
+                    url: url.to_string(),
+                })
            },
            "POST" => {
                 let url = format!("http://{}:{}{}", request.target, request.port, request.endpoint);
@@ -63,11 +76,21 @@ fn main() {
                             match req.send_form(&data.iter().map(|(x, y)| (x.as_str(), y.as_str())).collect::<Vec<_>>()) {
                                 Ok(r) => {
                                     println!("{:?}", r);
-                                    responses.push(r);
+                                    responses.push(Response {
+                                        status: r.status(),
+                                        status_text: r.status_text().to_string(),
+                                        method: String::from("POST"),
+                                        url: url.to_string(),
+                                    });
                                 },
-                                Err(Error::Status(_, e)) => {
-                                    println!("{:?}", e);
-                                    responses.push(e);
+                                Err(Error::Status(_, r)) => {
+                                    println!("{:?}", r);
+                                    responses.push(Response {
+                                        status: r.status(),
+                                        status_text: r.status_text().to_string(),
+                                        method: String::from("POST"),
+                                        url: url.to_string(),
+                                    });
                                 },
                                 Err(e) => {
                                     eprintln!("{}", e);
@@ -79,11 +102,21 @@ fn main() {
                             match req.send_string(&serde_json::to_string(&serde_json::to_value(data).unwrap()).unwrap()) {
                                 Ok(r) => {
                                     println!("{:?}", r);
-                                    responses.push(r);
+                                    responses.push(Response {
+                                        status: r.status(),
+                                        status_text: r.status_text().to_string(),
+                                        method: String::from("POST"),
+                                        url: url.to_string(),
+                                    });
                                 },
-                                Err(Error::Status(_, e)) => {
-                                    println!("{:?}", e);
-                                    responses.push(e);
+                                Err(Error::Status(_, r)) => {
+                                    println!("{:?}", r);
+                                    responses.push(Response {
+                                        status: r.status(),
+                                        status_text: r.status_text().to_string(),
+                                        method: String::from("POST"),
+                                        url: url.to_string(),
+                                    });
                                 },
                                 Err(e) => {
                                     eprintln!("{}", e);
@@ -95,11 +128,21 @@ fn main() {
                             match req.send_string(&data.get("txt").map(|v| v.to_string()).unwrap()) {
                                 Ok(r) => {
                                     println!("{:?}", r);
-                                    responses.push(r);
+                                    responses.push(Response {
+                                        status: r.status(),
+                                        status_text: r.status_text().to_string(),
+                                        method: String::from("POST"),
+                                        url: url.to_string(),
+                                    });
                                 },
-                                Err(Error::Status(_, e)) => {
-                                    println!("{:?}", e);
-                                    responses.push(e);
+                                Err(Error::Status(_, r)) => {
+                                    println!("{:?}", r);
+                                    responses.push(Response {
+                                        status: r.status(),
+                                        status_text: r.status_text().to_string(),
+                                        method: String::from("POST"),
+                                        url: url.to_string(),
+                                    });
                                 },
                                 Err(e) => {
                                     eprintln!("{}", e);
@@ -114,5 +157,19 @@ fn main() {
            _ => println!("Not supported request type") ,
         }
     }
-  //  println!("{:?}", responses);
+    println!("{:?}", responses);
+    let file_json = match File::create("sapi.json") {
+        Ok(f) => f,
+        Err(e) => {
+            eprintln!("Error while creating sapi.json file: {}", e);
+            process::exit(1);
+        }
+    };
+    match to_writer_pretty(file_json, &responses) {
+        Ok(_) => {}
+        Err(e) => {
+            eprintln!("Error while trying to save results to sapi.json file: {}", e);
+            process::exit(1);
+        }
+    }
 }
