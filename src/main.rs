@@ -3,7 +3,7 @@ use serde_json::to_writer_pretty;
 use std::{collections::HashMap, fs::File, env, process};
 use ureq::Error;
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Serialize, Deserialize)]
 struct Request {
     target: String,
     port: u16,
@@ -13,12 +13,13 @@ struct Request {
     data: Option<HashMap<String, String>>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Serialize, Deserialize)]
 struct Response {
     status: u16,
     status_text: String,
     method: String,
     url: String,
+    response_body: String,
 }
 
 fn main() {
@@ -75,6 +76,10 @@ fn main() {
                     status_text: response.status_text().to_string(),
                     method: String::from(request.method),
                     url: url.to_string(),
+                    response_body: match response.into_string() {
+                        Ok(s) => s,
+                        Err(_) => String::from(""),
+                    },
                 })
            },
            "POST" | "PUT" | "PATCH" => {
@@ -105,6 +110,10 @@ fn main() {
                                         status_text: r.status_text().to_string(),
                                         method: String::from(request.method),
                                         url: url.to_string(),
+                                        response_body: match r.into_string() {
+                                            Ok(s) => s,
+                                            Err(_) => String::from(""),
+                                        },
                                     });
                                 },
                                 Err(Error::Status(_, r)) => {
@@ -114,6 +123,10 @@ fn main() {
                                         status_text: r.status_text().to_string(),
                                         method: String::from("POST"),
                                         url: url.to_string(),
+                                        response_body: match r.into_string() {
+                                            Ok(s) => s,
+                                            Err(_) => String::from(""),
+                                        },
                                     });
                                 },
                                 Err(e) => {
@@ -131,6 +144,10 @@ fn main() {
                                         status_text: r.status_text().to_string(),
                                         method: String::from("POST"),
                                         url: url.to_string(),
+                                        response_body: match r.into_string() {
+                                            Ok(s) => s,
+                                            Err(_) => String::from(""),
+                                        },
                                     });
                                 },
                                 Err(Error::Status(_, r)) => {
@@ -140,6 +157,10 @@ fn main() {
                                         status_text: r.status_text().to_string(),
                                         method: String::from("POST"),
                                         url: url.to_string(),
+                                        response_body: match r.into_string() {
+                                            Ok(s) => s,
+                                            Err(_) => String::from(""),
+                                        },
                                     });
                                 },
                                 Err(e) => {
@@ -157,6 +178,10 @@ fn main() {
                                         status_text: r.status_text().to_string(),
                                         method: String::from("POST"),
                                         url: url.to_string(),
+                                        response_body: match r.into_string() {
+                                            Ok(s) => s,
+                                            Err(_) => String::from(""),
+                                        },
                                     });
                                 },
                                 Err(Error::Status(_, r)) => {
@@ -166,6 +191,10 @@ fn main() {
                                         status_text: r.status_text().to_string(),
                                         method: String::from("POST"),
                                         url: url.to_string(),
+                                        response_body: match r.into_string() {
+                                            Ok(s) => s,
+                                            Err(_) => String::from(""),
+                                        },
                                     });
                                 },
                                 Err(e) => {
@@ -181,7 +210,6 @@ fn main() {
            _ => println!("Not supported request type") ,
         }
     }
-    println!("{:?}", responses);
     let file_json = match File::create("sapi.json") {
         Ok(f) => f,
         Err(e) => {
@@ -196,4 +224,5 @@ fn main() {
             process::exit(1);
         }
     }
+    println!("Saved full requests data to sapi.json file");
 }
