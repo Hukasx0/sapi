@@ -74,7 +74,7 @@ fn main() {
                 responses.push(Response {
                     status: response.status(),
                     status_text: response.status_text().to_string(),
-                    method: String::from(request.method),
+                    method: request.method,
                     url: url.to_string(),
                     response_body: match response.into_string() {
                         Ok(s) => s,
@@ -108,7 +108,7 @@ fn main() {
                                     responses.push(Response {
                                         status: r.status(),
                                         status_text: r.status_text().to_string(),
-                                        method: String::from(request.method),
+                                        method: request.method,
                                         url: url.to_string(),
                                         response_body: match r.into_string() {
                                             Ok(s) => s,
