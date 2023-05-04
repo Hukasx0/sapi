@@ -1,6 +1,6 @@
 use serde::{Serialize, Deserialize};
 use serde_json::to_writer_pretty;
-use std::{collections::HashMap, fs::File, env, process};
+use std::{collections::HashMap, fs::File, io::Write, env, process};
 use ureq::Error;
 
 #[derive(Serialize, Deserialize)]
@@ -25,7 +25,36 @@ struct Response {
 fn main() {
     let argv: Vec<String> = env::args().collect();
     if argv.len() != 2 {
-        println!("Usage: {} file.yml", argv[0]);
+        println!("Usage: {} file.yml - to make HTTP requests from a file\n       {} new      - to generate a new skeleton file for making HTTP requests", argv[0], argv[0]);
+        process::exit(0);
+    } else if argv[1] == "new" {
+        let example_yaml = r#"- target: <target>
+  port: <port>
+  endpoint: <path>
+  method: <method>
+#  headers:                         
+  #  Authorization: Bearer <token>
+  #  Content-Type: application/x-www-form-urlencoded
+  #  Content-Type: application/json
+  #  Content-Type: text/plain
+  #  <header_name>: <header_value>
+#  data:
+  #  <value_name>: <value>
+        "#;
+        let mut file = match File::create("sapi.yml") {
+            Ok(f) => f,
+            Err(e) => {
+                eprintln!("Error while creating sapi.yml file: {}", e);
+                process::exit(1);
+            }
+        };
+        match file.write_all(example_yaml.as_bytes()) {
+            Ok(_) => println!("sapi.yml created successfully!"),
+            Err(e) => {
+                eprintln!("Error while writing to sapi.yml file: {}", e);
+                process::exit(1);
+            }
+        }
         process::exit(0);
     }
     let file = match File::open(&argv[1]) {

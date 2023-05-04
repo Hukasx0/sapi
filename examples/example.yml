@@ -1,3 +1,5 @@
+# ./sapi example.yml or .\sapi.exe example.yml
+# Run any HTTP server on port 80 to see how it works
 - target: 127.0.0.1
   port: 80
   endpoint: /
