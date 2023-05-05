@@ -1,6 +1,6 @@
 use serde::{Serialize, Deserialize};
 use serde_json::to_writer_pretty;
-use std::{collections::HashMap, fs::File, io::Write, env, process};
+use std::{collections::HashMap, fs::File, io::Write, time::Instant, env, process};
 use ureq::Error;
 
 #[derive(Serialize, Deserialize)]
@@ -19,6 +19,7 @@ struct Response {
     status_text: String,
     method: String,
     url: String,
+    server_response_time_ms: u128,
     response_body: String,
 }
 
@@ -91,6 +92,7 @@ fn main() {
                         req = req.set(&header, &data);
                     }
                 }
+                let req_start_time = Instant::now();
                 let response = match req.call() {
                     Ok(r) => r,
                     Err(Error::Status(_, r)) => r,
@@ -99,12 +101,14 @@ fn main() {
                         process::exit(1);
                     }
                 };
+                let req_end_time = Instant::now();
                 println!("{:?}", response);
                 responses.push(Response {
                     status: response.status(),
                     status_text: response.status_text().to_string(),
                     method: request.method,
                     url: url.to_string(),
+                    server_response_time_ms: (req_end_time - req_start_time).as_millis(),
                     response_body: match response.into_string() {
                         Ok(s) => s,
                         Err(_) => String::from(""),
@@ -131,14 +135,18 @@ fn main() {
                 if let Some(data) = request.data {
                     match req.header("Content-Type") {
                         Some(content_type) if content_type.starts_with("application/x-www-form-urlencoded") => {
-                            match req.send_form(&data.iter().map(|(x, y)| (x.as_str(), y.as_str())).collect::<Vec<_>>()) {
+                            let form = &data.iter().map(|(x, y)| (x.as_str(), y.as_str())).collect::<Vec<_>>();
+                            let req_start_time = Instant::now();
+                            match req.send_form(form) {
                                 Ok(r) => {
+                                    let req_end_time = Instant::now();
                                     println!("{:?}", r);
                                     responses.push(Response {
                                         status: r.status(),
                                         status_text: r.status_text().to_string(),
                                         method: request.method,
                                         url: url.to_string(),
+                                        server_response_time_ms: (req_end_time - req_start_time).as_millis(),
                                         response_body: match r.into_string() {
                                             Ok(s) => s,
                                             Err(_) => String::from(""),
@@ -146,12 +154,14 @@ fn main() {
                                     });
                                 },
                                 Err(Error::Status(_, r)) => {
+                                    let req_end_time = Instant::now();
                                     println!("{:?}", r);
                                     responses.push(Response {
                                         status: r.status(),
                                         status_text: r.status_text().to_string(),
                                         method: String::from("POST"),
                                         url: url.to_string(),
+                                        server_response_time_ms: (req_end_time - req_start_time).as_millis(),
                                         response_body: match r.into_string() {
                                             Ok(s) => s,
                                             Err(_) => String::from(""),
@@ -165,14 +175,18 @@ fn main() {
                             }
                         },
                         Some(content_type) if content_type.starts_with("application/json") => {
-                            match req.send_string(&serde_json::to_string(&serde_json::to_value(data).unwrap()).unwrap()) {
+                            let json_data = &serde_json::to_string(&serde_json::to_value(data).unwrap()).unwrap();
+                            let req_start_time = Instant::now();
+                            match req.send_string(json_data) {
                                 Ok(r) => {
+                                    let req_end_time = Instant::now();
                                     println!("{:?}", r);
                                     responses.push(Response {
                                         status: r.status(),
                                         status_text: r.status_text().to_string(),
                                         method: String::from("POST"),
                                         url: url.to_string(),
+                                        server_response_time_ms: (req_end_time - req_start_time).as_millis(),
                                         response_body: match r.into_string() {
                                             Ok(s) => s,
                                             Err(_) => String::from(""),
@@ -180,12 +194,14 @@ fn main() {
                                     });
                                 },
                                 Err(Error::Status(_, r)) => {
+                                    let req_end_time = Instant::now();
                                     println!("{:?}", r);
                                     responses.push(Response {
                                         status: r.status(),
                                         status_text: r.status_text().to_string(),
                                         method: String::from("POST"),
                                         url: url.to_string(),
+                                        server_response_time_ms: (req_end_time - req_start_time).as_millis(),
                                         response_body: match r.into_string() {
                                             Ok(s) => s,
                                             Err(_) => String::from(""),
@@ -199,14 +215,18 @@ fn main() {
                             }
                         },
                         Some(content_type) if content_type.starts_with("text/plain") => {
-                            match req.send_string(&data.get("txt").map(|v| v.to_string()).unwrap()) {
+                            let plain_text = &data.get("txt").map(|v| v.to_string()).unwrap();
+                            let req_start_time = Instant::now();
+                            match req.send_string(plain_text) {
                                 Ok(r) => {
+                                    let req_end_time = Instant::now();
                                     println!("{:?}", r);
                                     responses.push(Response {
                                         status: r.status(),
                                         status_text: r.status_text().to_string(),
                                         method: String::from("POST"),
                                         url: url.to_string(),
+                                        server_response_time_ms: (req_end_time - req_start_time).as_millis(),
                                         response_body: match r.into_string() {
                                             Ok(s) => s,
                                             Err(_) => String::from(""),
@@ -214,12 +234,14 @@ fn main() {
                                     });
                                 },
                                 Err(Error::Status(_, r)) => {
+                                    let req_end_time = Instant::now();
                                     println!("{:?}", r);
                                     responses.push(Response {
                                         status: r.status(),
                                         status_text: r.status_text().to_string(),
                                         method: String::from("POST"),
                                         url: url.to_string(),
+                                        server_response_time_ms: (req_end_time - req_start_time).as_millis(),
                                         response_body: match r.into_string() {
                                             Ok(s) => s,
                                             Err(_) => String::from(""),
