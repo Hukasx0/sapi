@@ -8,7 +8,7 @@
     # Content-Type: application/json
     # Content-Type: text/plain
     # <header_name>: <header_value>
-#  data:                            # here you can insert data to be sent (depending on the header, x-www-form-urlencoded, json, plain they are formatted accordingly)   .THIS VALUE IS OPTIONAL.
+#  data:                               # here you can insert data to be sent (depending on the header, x-www-form-urlencoded, json, plain they are formatted accordingly)   .THIS VALUE IS OPTIONAL.
     # txt: <plain_text>                # text/plain only sends value that is named txt
     # txt: <plain_text>                # you can send more than one value
 
