@@ -18,6 +18,7 @@ struct Request {
     target: String,
     port: u16,
     endpoint: String,
+    query: Option<HashMap<String, String>>,
     method: String,
     headers: Option<HashMap<String, String>>,
     data: Option<HashMap<String, String>>,
@@ -43,6 +44,8 @@ async fn main() {
         let example_yaml = r#"- target: <target>
   port: <port>
   endpoint: <path>
+#  query:
+#    <query_param_name>: <query_param_value>
   method: <method>
 #  headers:                         
   #  Authorization: Bearer <token>
@@ -88,7 +91,21 @@ async fn main() {
         async {
             match request.method.as_str() {
             "GET" | "HEAD" | "DELETE" => {
-                    let url = format!("http://{}:{}{}", request.target, request.port, request.endpoint);
+                    let query_params = match request.query {
+                        Some(params) => {
+                            if params.is_empty() {
+                                String::from("")
+                            } else {
+                                let mut vals = vec![];
+                                for (key, value) in params {
+                                    vals.push(format!("{}={}", key, value));
+                                }
+                                format!("?{}", vals.join("&"))
+                            }
+                        },
+                        None => String::from("")
+                    };
+                    let url = format!("http://{}:{}{}{}", request.target, request.port, request.endpoint, query_params);
                     let mut req;
                     match request.method.as_str() {
                         "GET" => req = ureq::get(&url),
@@ -128,7 +145,21 @@ async fn main() {
                     })
             },
             "POST" | "PUT" | "PATCH" => {
-                    let url = format!("http://{}:{}{}", request.target, request.port, request.endpoint);
+                    let query_params = match request.query {
+                        Some(params) => {
+                            if params.is_empty() {
+                                String::from("")
+                            } else {
+                                let mut vals = vec![];
+                                for (key, value) in params {
+                                    vals.push(format!("{}={}", key, value));
+                                }
+                                format!("?{}", vals.join("&"))
+                            }
+                        },
+                        None => String::from("")
+                    };
+                    let url = format!("http://{}:{}{}{}", request.target, request.port, request.endpoint, query_params);
                     let mut req;
                     match request.method.as_str() {
                         "POST" => req = ureq::post(&url),

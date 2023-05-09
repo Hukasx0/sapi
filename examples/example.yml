@@ -5,6 +5,14 @@
   endpoint: /
   method: GET
 
+- target: 127.0.0.1
+  port: 80
+  endpoint: /data
+  query:
+     limit: 10
+     safe: true
+  method: GET
+
 - target: localhost
   port: 80
   endpoint: /auth

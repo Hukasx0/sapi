@@ -1,6 +1,8 @@
 - target: <target>                  # ip address or domain  !THIS VALUE IS MANDATORY!
   port: <port>                      # port number  !THIS VALUE IS MANDATORY!
-  endpoint: <path>                  # path on the server (here we can also put query parameters, example: /auth?user=5)  !THIS VALUE IS MANDATORY!
+  endpoint: <path>                  # path on the server !THIS VALUE IS MANDATORY!
+# query:                            # here we enter the query parameters (those that appear in the URL)  .THIS VALUE IS OPTIONAL.
+    # <query_parameter_name>: <query_parameter_value>
   method: <method>                  # GET POST HEAD DELETE PUT PATCH  !THIS VALUE IS MANDATORY!
 #  headers:                         # here you can insert any headers  .THIS VALUE IS OPTIONAL.
     # Authorization: Bearer <token>
@@ -8,9 +10,9 @@
     # Content-Type: application/json
     # Content-Type: text/plain
     # <header_name>: <header_value>
-#  data:                               # here you can insert data to be sent (depending on the header, x-www-form-urlencoded, json, plain they are formatted accordingly)   .THIS VALUE IS OPTIONAL.
-    # txt: <plain_text>                # text/plain only sends value that is named txt
-    # txt: <plain_text>                # you can send more than one value
+#  data:                                # here you can insert data to be sent (depending on the header, x-www-form-urlencoded, json, plain they are formatted accordingly)   .THIS VALUE IS OPTIONAL.
+    # txt: <plain_text>                 # text/plain only sends value that is named txt
+    # name: <plain_text>                # you can send more than one value
 
           # of course you can save more than one request in one file
 
@@ -25,10 +27,13 @@
 # request 2
 - target: localhost
   port: 80
-  endpoint: /api/posts?id=5&safe=true
+  endpoint: /api/posts
+  query:
+     id: 5
+     safe: true
+  method: GET
   headers:
     Authorization: Bearer 12345
-  method: GET
 
 #request 3
 - target: localhost
