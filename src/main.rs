@@ -1,6 +1,7 @@
 use serde::{Serialize, Deserialize};
 use serde_json::to_writer_pretty;
 use std::{collections::HashMap, fs::File, io::Write, time::Instant, env, process};
+use tokio::sync::Mutex;
 use ureq::Error;
 
 #[derive(Serialize, Deserialize)]
@@ -23,7 +24,8 @@ struct Response {
     response_body: String,
 }
 
-fn main() {
+#[tokio::main]
+async fn main() {
     let argv: Vec<String> = env::args().collect();
     if argv.len() != 2 {
         println!("Usage: {} file.yml - to make HTTP requests from a file\n       {} new      - to generate a new skeleton file for making HTTP requests", argv[0], argv[0]);
@@ -72,8 +74,9 @@ fn main() {
             process::exit(1);
         }
     };
-    let mut responses: Vec<Response> = Vec::new();
+    let responses: Mutex<Vec<Response>> = Mutex::new(Vec::new());
     for request in request_contents {
+        async{
         match request.method.as_str() {
            "GET" | "HEAD" | "DELETE" => {
                 let url = format!("http://{}:{}{}", request.target, request.port, request.endpoint);
@@ -103,7 +106,7 @@ fn main() {
                 };
                 let req_end_time = Instant::now();
                 println!("{:?}", response);
-                responses.push(Response {
+                responses.lock().await.push(Response {
                     status: response.status(),
                     status_text: response.status_text().to_string(),
                     method: request.method,
@@ -141,7 +144,7 @@ fn main() {
                                 Ok(r) => {
                                     let req_end_time = Instant::now();
                                     println!("{:?}", r);
-                                    responses.push(Response {
+                                    responses.lock().await.push(Response {
                                         status: r.status(),
                                         status_text: r.status_text().to_string(),
                                         method: request.method,
@@ -156,7 +159,7 @@ fn main() {
                                 Err(Error::Status(_, r)) => {
                                     let req_end_time = Instant::now();
                                     println!("{:?}", r);
-                                    responses.push(Response {
+                                    responses.lock().await.push(Response {
                                         status: r.status(),
                                         status_text: r.status_text().to_string(),
                                         method: String::from("POST"),
@@ -170,7 +173,7 @@ fn main() {
                                 },
                                 Err(e) => {
                                     eprintln!("{}", e);
-                                    break;
+                                    return;
                                 },
                             }
                         },
@@ -181,7 +184,7 @@ fn main() {
                                 Ok(r) => {
                                     let req_end_time = Instant::now();
                                     println!("{:?}", r);
-                                    responses.push(Response {
+                                    responses.lock().await.push(Response {
                                         status: r.status(),
                                         status_text: r.status_text().to_string(),
                                         method: String::from("POST"),
@@ -196,7 +199,7 @@ fn main() {
                                 Err(Error::Status(_, r)) => {
                                     let req_end_time = Instant::now();
                                     println!("{:?}", r);
-                                    responses.push(Response {
+                                    responses.lock().await.push(Response {
                                         status: r.status(),
                                         status_text: r.status_text().to_string(),
                                         method: String::from("POST"),
@@ -210,7 +213,7 @@ fn main() {
                                 },
                                 Err(e) => {
                                     eprintln!("{}", e);
-                                    break;
+                                    return;
                                 },
                             }
                         },
@@ -221,7 +224,7 @@ fn main() {
                                 Ok(r) => {
                                     let req_end_time = Instant::now();
                                     println!("{:?}", r);
-                                    responses.push(Response {
+                                    responses.lock().await.push(Response {
                                         status: r.status(),
                                         status_text: r.status_text().to_string(),
                                         method: String::from("POST"),
@@ -236,7 +239,7 @@ fn main() {
                                 Err(Error::Status(_, r)) => {
                                     let req_end_time = Instant::now();
                                     println!("{:?}", r);
-                                    responses.push(Response {
+                                    responses.lock().await.push(Response {
                                         status: r.status(),
                                         status_text: r.status_text().to_string(),
                                         method: String::from("POST"),
@@ -250,7 +253,7 @@ fn main() {
                                 },
                                 Err(e) => {
                                     eprintln!("{}", e);
-                                    break;
+                                    return;
                                 },
                             }
                         },
@@ -260,6 +263,7 @@ fn main() {
            },
            _ => println!("Not supported request type") ,
         }
+    }.await;
     }
     let file_json = match File::create("sapi.json") {
         Ok(f) => f,
@@ -268,7 +272,7 @@ fn main() {
             process::exit(1);
         }
     };
-    match to_writer_pretty(file_json, &responses) {
+    match to_writer_pretty(file_json, &*responses.lock().await) {
         Ok(_) => {}
         Err(e) => {
             eprintln!("Error while trying to save results to sapi.json file: {}", e);
