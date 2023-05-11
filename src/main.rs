@@ -202,7 +202,7 @@ async fn main() {
                                         responses.lock().await.push(Response {
                                             status: r.status(),
                                             status_text: r.status_text().to_string(),
-                                            method: String::from("POST"),
+                                            method: request.method,
                                             url: url.to_string(),
                                             server_response_time_ms: (req_end_time - req_start_time).as_millis(),
                                             response_body: match r.into_string() {
@@ -224,7 +224,7 @@ async fn main() {
                                         responses.lock().await.push(Response {
                                             status: r.status(),
                                             status_text: r.status_text().to_string(),
-                                            method: String::from("POST"),
+                                            method: request.method,
                                             url: url.to_string(),
                                             server_response_time_ms: (req_end_time - req_start_time).as_millis(),
                                             response_body: match r.into_string() {
@@ -239,7 +239,7 @@ async fn main() {
                                         responses.lock().await.push(Response {
                                             status: r.status(),
                                             status_text: r.status_text().to_string(),
-                                            method: String::from("POST"),
+                                            method: request.method,
                                             url: url.to_string(),
                                             server_response_time_ms: (req_end_time - req_start_time).as_millis(),
                                             response_body: match r.into_string() {
@@ -261,7 +261,7 @@ async fn main() {
                                         responses.lock().await.push(Response {
                                             status: r.status(),
                                             status_text: r.status_text().to_string(),
-                                            method: String::from("POST"),
+                                            method: request.method,
                                             url: url.to_string(),
                                             server_response_time_ms: (req_end_time - req_start_time).as_millis(),
                                             response_body: match r.into_string() {
@@ -276,7 +276,7 @@ async fn main() {
                                         responses.lock().await.push(Response {
                                             status: r.status(),
                                             status_text: r.status_text().to_string(),
-                                            method: String::from("POST"),
+                                            method: request.method,
                                             url: url.to_string(),
                                             server_response_time_ms: (req_end_time - req_start_time).as_millis(),
                                             response_body: match r.into_string() {
